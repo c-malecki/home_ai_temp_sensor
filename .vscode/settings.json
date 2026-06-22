@@ -1,0 +1,21 @@
+{
+  "C_Cpp.intelliSenseEngine": "disabled",
+  "idf.extensionActivationMode": "always",
+  "idf.openOcdConfigs": [
+    "board/esp32-wrover-kit-3.3v.cfg"
+  ],
+  "idf.port": "/dev/ttyUSB0",
+  "idf.currentSetup": "/home/chris/.espressif/v6.0.1/esp-idf",
+  "idf.customExtraVars": {
+    "IDF_TARGET": "esp32"
+  },
+  "clangd.path": "/home/chris/.espressif/tools/esp-clang/esp-20.1.1_20250829/esp-clang/bin/clangd",
+  "clangd.arguments": [
+    "--background-index",
+    "--query-driver=**",
+    "--compile-commands-dir=/home/chris/Projects/home_ai/temp_sensor/build"
+  ],
+  "idf.flashType": "UART",
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
+}

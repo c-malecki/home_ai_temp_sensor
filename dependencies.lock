@@ -1,0 +1,17 @@
+dependencies:
+  idf:
+    source:
+      type: idf
+    version: 6.0.1
+  ssd1306:
+    dependencies: []
+    source:
+      path: components/ssd1306
+      type: local
+    version: 1.1.2
+direct_dependencies:
+- idf
+- ssd1306
+manifest_hash: 58c0381b3a5d7adda3067eb079e68db125e5bca8bd9ecf42ce4b893c84303882
+target: esp32
+version: 3.0.0
