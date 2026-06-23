@@ -4,17 +4,16 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "nvs_flash.h"
-#include "oled.h"
 #include "sensor.h"
 
 static const char *TAG = "TEMP1_TEST";
 static Sensor_t sensor;
-static OLED_t oled;
 
 void sensor_task(void *pvParameters);
 void ble_task(void *pvParameters);
 
 void App_Init(App_t *app) {
+  app->read_interval = 2000;
   app->data_mutex = xSemaphoreCreateMutex();
   assert(app->data_mutex != NULL);
 
@@ -38,22 +37,19 @@ void App_Init(App_t *app) {
   i2c_master_bus_handle_t i2c_bus_handle;
   ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_bus_cfg, &i2c_bus_handle));
 
-  // Sensor_Init(&sensor, i2c_bus_handle);
-  // app->sensor = &sensor;
-
-  OLED_Init(&oled, i2c_bus_handle);
-  app->oled = &oled;
+  Sensor_Init(&sensor, i2c_bus_handle);
+  app->sensor = &sensor;
 
   // BLE_Init();
 }
 
 void App_Run(App_t *app) {
 
-  while (1) {
-    vTaskDelay(pdMS_TO_TICKS(1000));
-  }
+  // while (1) {
+  //   vTaskDelay(pdMS_TO_TICKS(1000));
+  // }
 
-  // xTaskCreate(sensor_task, "sensor_task", 3072, app, 3, NULL);
+  xTaskCreate(sensor_task, "sensor_task", 3072, app, 3, NULL);
   // xTaskCreate(ble_task, "ble_task", 4096, app, 5, NULL);
 }
 
@@ -70,14 +66,13 @@ void sensor_task(void *pvParameters) {
     if (xSemaphoreTake(app->data_mutex, pdMS_TO_TICKS(50)) == pdTRUE) {
       app->sensor->last_temp = last_temp;
       app->temp_new = true;
-      ESP_LOGI("SENSOR_TASK", "Stored temperature: %.2f C", last_temp);
+      ESP_LOGI("Temperature:", "%.2f F", last_temp);
       xSemaphoreGive(app->data_mutex);
     } else {
-      ESP_LOGE("SENSOR_TASK", "Failed to acquire mutex lock! Data skipped.");
+      ESP_LOGE("Temperature:", "Failed to acquire mutex lock! Data skipped.");
     }
 
-    // Wait 2 seconds before the next reading
-    vTaskDelay(pdMS_TO_TICKS(2000));
+    vTaskDelay(pdMS_TO_TICKS(app->read_interval));
   }
 }
 

@@ -34,6 +34,7 @@ float Sensor_GetResult(Sensor_t *sensor) {
   uint16_t raw = ((data[0] << 8) | data[1]);
 
   temp_c = -45.0f + (175.0f * (float)raw / 65535.0f);
+  float temp_f = temp_c * 1.8f + 32.0f;
 
-  return temp_c;
+  return temp_f;
 }

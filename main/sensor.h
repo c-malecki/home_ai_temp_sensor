@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define SENSOR_I2C_ADDR (0x44)
+#define SENSOR_I2C_ADDR (0x45)
 
 #define SENSOR_CMD_MEASURE_MSB (0x24)
 #define SENSOR_CMD_MEASURE_LSB (0x00)
