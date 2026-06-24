@@ -19,7 +19,7 @@
 #include "services/gap/ble_svc_gap.h"
 #include "services/gatt/ble_svc_gatt.h"
 
-static const char *TAG = "TEMP1_TEST";
+static const char *TAG = "TEMP_TEST";
 
 static App_t app;
 
@@ -34,13 +34,17 @@ static void ble_stack_reset_cb(int reason);
 static const struct ble_gatt_svc_def gatt_svcs[] = {
     {.type = BLE_GATT_SVC_TYPE_PRIMARY,
      .uuid = BLE_UUID16_DECLARE(BLE_SVC_UUID),
-     .characteristics = (struct ble_gatt_chr_def[]){{
-         .uuid = BLE_UUID16_DECLARE(BLE_CHAR_UUID),
-         .access_cb = ble_access_cb,
-         .flags =
-             BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_WRITE | BLE_GATT_CHR_F_NOTIFY,
-         .val_handle = &app.ble_val_handle,
-     }}}};
+     .characteristics =
+         (struct ble_gatt_chr_def[]){
+             {
+                 .uuid = BLE_UUID16_DECLARE(BLE_CHAR_UUID),
+                 .access_cb = ble_access_cb,
+                 .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_WRITE |
+                          BLE_GATT_CHR_F_NOTIFY,
+                 .val_handle = &app.ble_val_handle,
+             },
+             {0}}},
+    {0}};
 
 void sensor_init(App_t *app);
 
@@ -83,7 +87,7 @@ void app_main(void) {
 int ble_init(void) {
   ESP_ERROR_CHECK(nimble_port_init());
 
-  ble_svc_gap_device_name_set("TempSensor1");
+  ble_svc_gap_device_name_set(DEVICE_NAME);
   ble_svc_gap_init();
   ble_svc_gatt_init();
 
@@ -155,11 +159,12 @@ static int ble_access_cb(uint16_t conn_handle, uint16_t attr_handle,
   switch (ctxt->op) {
   case BLE_GATT_ACCESS_OP_READ_CHR:
 
-    if (xSemaphoreTake(app.data_mutex, pdMS_TO_TICKS(50)) == pdTRUE) {
-      snprintf(tx_buffer, sizeof(tx_buffer), "%.2f", app.temp_last_value);
-      xSemaphoreGive(app.data_mutex);
+    if (xSemaphoreTake(app.data_mutex, pdMS_TO_TICKS(50)) != pdTRUE) {
+      return BLE_ATT_ERR_UNLIKELY;
     }
 
+    snprintf(tx_buffer, sizeof(tx_buffer), "%.2f", app.temp_last_value);
+    xSemaphoreGive(app.data_mutex);
     os_mbuf_append(ctxt->om, tx_buffer, strlen(tx_buffer));
 
     return 0;
@@ -278,14 +283,15 @@ void sensor_task(void *pvParameters) {
 
     update_temp(app);
 
+    // snapshot local values to send while mutex locked
     if (xSemaphoreTake(app->data_mutex, pdMS_TO_TICKS(50)) == pdTRUE) {
       snprintf(tx_buffer, sizeof(tx_buffer), "%.2f", app->temp_last_value);
-      // uint8_t connected = app->ble_connected_to_hub;
+      uint8_t connected = app->ble_connected_to_hub;
       uint16_t conn = app->ble_conn_handle;
       uint16_t handle = app->ble_val_handle;
       xSemaphoreGive(app->data_mutex);
 
-      if (app->ble_connected_to_hub) {
+      if (connected) {
         struct os_mbuf *om =
             ble_hs_mbuf_from_flat(tx_buffer, strlen(tx_buffer));
 

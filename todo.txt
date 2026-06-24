@@ -1,0 +1,5 @@
+Write characteristics 
+
+- Rename Device
+- Change polling interval
+- Set location/room

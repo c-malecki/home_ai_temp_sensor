@@ -8,7 +8,7 @@
 #include <stdbool.h>
 #include "stdint.h"
 
-#define DEVICE_NAME "TEMP1_TEST"
+#define DEVICE_NAME "TEMP_SENSOR1"
 
 #define I2C_SDA_PIN 21
 #define I2C_SCL_PIN 22
